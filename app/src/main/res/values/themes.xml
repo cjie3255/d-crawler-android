@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.JDCrawler" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="colorPrimary">#E4393C</item>
+        <item name="colorPrimaryDark">#C8102E</item>
+        <item name="colorAccent">#E4393C</item>
+    </style>
+</resources>
