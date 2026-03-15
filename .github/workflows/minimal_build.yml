@@ -1,0 +1,76 @@
+name: Minimal Android Build
+
+on:
+  workflow_dispatch: true  # 只允许手动触发
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Java 11
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '11'
+    
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+      with:
+        api-level: 33
+        build-tools: 33.0.0
+        ndk: false  # 不需要NDK
+        cmake: false  # 不需要CMake
+    
+    - name: Make gradlew executable
+      run: chmod +x ./gradlew
+    
+    - name: Cache Gradle dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+    
+    - name: Build with Gradle
+      run: |
+        echo "开始构建..."
+        ./gradlew assembleDebug --no-daemon --stacktrace --info
+        echo "构建完成"
+    
+    - name: Upload APK
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: jd-crawler-apk
+        path: app/build/outputs/apk/debug/app-debug.apk
+        retention-days: 7
+    
+    - name: Show success message
+      if: success()
+      run: |
+        echo "🎉 构建成功！"
+        echo "APK已生成: app/build/outputs/apk/debug/app-debug.apk"
+        if [ -f "app/build/outputs/apk/debug/app-debug.apk" ]; then
+          echo "文件大小: $(ls -lh app/build/outputs/apk/debug/app-debug.apk | awk '{print $5}')"
+        fi
+    
+    - name: Show failure message
+      if: failure()
+      run: |
+        echo "❌ 构建失败"
+        echo "请检查以下可能的问题："
+        echo "1. Gradle版本兼容性"
+        echo "2. 依赖下载问题"
+        echo "3. Android SDK配置"
+        echo ""
+        echo "建议："
+        echo "- 检查 build.gradle 文件"
+        echo "- 查看详细错误日志"
+        echo "- 尝试本地构建"
