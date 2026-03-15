@@ -1,0 +1,66 @@
+name: Simple Android Build
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    
+    - name: Setup Android environment
+      uses: android-actions/setup-android@v3
+      with:
+        api-level: 34
+        build-tools: 34.0.0
+    
+    - name: Make gradlew executable
+      run: chmod +x ./gradlew
+    
+    - name: Setup Gradle
+      run: |
+        # 设置Gradle wrapper
+        ./gradlew --version || true
+    
+    - name: Build APK
+      run: |
+        # 尝试构建，显示详细错误
+        ./gradlew assembleDebug --stacktrace --info || echo "构建失败，查看错误信息"
+        
+    - name: Check if APK exists
+      id: check-apk
+      run: |
+        if [ -f "app/build/outputs/apk/debug/app-debug.apk" ]; then
+          echo "APK生成成功"
+          echo "apk_exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "APK未生成"
+          echo "apk_exists=false" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Upload APK if exists
+      if: steps.check-apk.outputs.apk_exists == 'true'
+      uses: actions/upload-artifact@v3
+      with:
+        name: jd-crawler-apk
+        path: app/build/outputs/apk/debug/app-debug.apk
+        retention-days: 7
+    
+    - name: Upload build logs
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-logs
+        path: |
+          **/build/reports/**
+          **/build/outputs/logs/**

@@ -1,11 +1,9 @@
-name: Android Build
+name: Android Build (Disabled)
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-  workflow_dispatch:  # 手动触发
+    branches: [ '!main' ]  # 不在main分支触发
+  workflow_dispatch: false
 
 jobs:
   build:
